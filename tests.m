@@ -50,16 +50,20 @@ end
 end
 
 function [fd,r,m,poly] = compute_fd(img)
-
 % Ici c'est le nombre de points du contour
-N = 80;
-M = 80;
+N = 110;
+M = 110;
 h = size(img,1);
 w = size(img,2);
 
+% x sont les lignes 
+% y sont toutes les colonnes
 [x,y]=find(img);
+% mx est la somme de toutes les colonnes avec des pixel blanc
 mx=round(mean(y));
+% my est la somme de toutes les lignes avec des pixel blanc
 my=round(mean(x));
+% m est le barycentre pixel blanc
 m = [mx my];
 
 
@@ -71,34 +75,48 @@ r = zeros(1,N);
 
 %On va parcourir chaque angle 
 for i = 1:N
-    
-    tmpMx = mx;
-    tmpMy = my;
-    % On cherche le premier pixel blanc de la droite de cet angle
-    while ((tmpMx>1 & tmpMy>1) &(tmpMx<w & tmpMy<h))
-       % On s'arrete si on trouve un pixel blanc et on met le contours de l'img dans tmpMx et tmpMy
-       if (img(tmpMy,tmpMx) == 1)
-           dx=tmpMx-mx;
-           dy=tmpMy-my;
-           r(1,i)=sqrt(dx^2+dy^2);
-           poly(i,1)=tmpMx;
-           poly(i,2)=tmpMy;
-           
-       end
-       
-       floatX = tmpMx+i*cos(t(1,i));
-       floatY = tmpMy+i*sin(t(1,i));
-       tmpMx=round(floatX);
-       tmpMy=round(floatY);
+    tmp=1;
+    tmpMx=mx;
+    tmpMy=my;
+    % Tant quand on est pas arrivé au bord de l'img
+    % on cherchera le point qui se trouve sur la droite de l'angle au bord de l'img
+    while ((tmpMx>1 & tmpMy>1) & (tmpMx<w & tmpMy<h))
+        tmpMx=round(mx+tmp*cos(t(1,i)));
+        tmpMy=round(my+tmp*sin(t(1,i)));
+        %bord de l'img
+        bordX=tmpMx;
+        bordY=tmpMy;
+        tmp=tmp+1;    
     end
-
+    % Calcule de la distance au barycentre en partant du bord de l'img
+    for tmp = 1:tmp
+    tmpMx=round(bordX-tmp*cos(t(1,i)));
+    tmpMy=round(bordY-tmp*sin(t(1,i)));
+    % On s'arrete si on trouve un pixel blanc et on met le contour dans le
+    % polygone 
+    if (img(tmpMy,tmpMx) == 1)
+        x=tmpMx-mx;
+        y=tmpMy-my;
+        r(1,i)=sqrt(x^2+y^2);
+        poly(i,1)=tmpMx;
+        poly(i,2)=tmpMy;
+        break;
+    end
+    x=bordX-mx;
+    y=bordY-my;
+    r(1,i)=sqrt(x^2+y^2);
+    poly(i,1)=bordX;
+    poly(i,2)=bordY;
+    end
 end
+%fd descripteu  de Fourier 
 fd = zeros(1,N);
-
+%R la transformé de Fourier 
+R = zeros(1, M) ;
 for i = 1 : M
     % On a R la transformation de Fourier de r
     R(1,i) = fft(r(1,i));
     % Le vecteur fd formé par les M premiers coefficients de R(f)/R(1)
-    fd(1,i) = R(1,i) / R(1,1);
+    fd(1, i) = abs(R(1, i))/ abs(R(1, 1)) ;
 end
 end
