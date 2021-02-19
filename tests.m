@@ -52,8 +52,8 @@ end
 function [fd,r,m,poly] = compute_fd(img)
 
 % Ici c'est le nombre de points du contour
-N = 256;
-M = 256;
+N = 80;
+M = 80;
 h = size(img,1);
 w = size(img,2);
 
@@ -63,37 +63,19 @@ my=round(mean(x));
 m = [mx my];
 
 
-% Ici les angles
+% Initilisation
 t = linspace(0,2*pi,N);
 R = min(h,w)/2;
 poly = zeros(N, 2);
 r = zeros(1,N);
 
-% On doit donc chercher le point dans la droite de l'angle au bord de l'img
+%On va parcourir chaque angle 
 for i = 1:N
-    j=1;
-
-    % Tant que j ne se trouve pas au bord de l'img
-    tmpMx=mx;
-    tmpMy=my;
-    while ((tmpMx>1 & tmpMy>1) & (tmpMx<w & tmpMy<h))
-       tmpMx = round(mx+j*cos(t(1,i)));
-       tmpMy = round(my+j*sin(t(1,i)));
-       j=j+1;
-    end
-
-    % le nb iteration de sorti du cercle = le nb iterations pour arrivé au bord du centre
-
-    nbIteration=j;
-    bordX=tmpMx;
-    bordY=tmpMy;
-
-    % On cherche le premier blanc avec lequel on va calculer la distance du barycentre en partant du bord de l'img
-    for j = 1:nbIteration
-       floatX = bordX-j*cos(t(1,i));
-       floatY = bordY-j*sin(t(1,i));
-       tmpMx=round(floatX);
-       tmpMy=round(floatY);
+    
+    tmpMx = mx;
+    tmpMy = my;
+    % On cherche le premier pixel blanc de la droite de cet angle
+    while ((tmpMx>1 & tmpMy>1) &(tmpMx<w & tmpMy<h))
        % On s'arrete si on trouve un pixel blanc et on met le contours de l'img dans tmpMx et tmpMy
        if (img(tmpMy,tmpMx) == 1)
            dx=tmpMx-mx;
@@ -101,17 +83,13 @@ for i = 1:N
            r(1,i)=sqrt(dx^2+dy^2);
            poly(i,1)=tmpMx;
            poly(i,2)=tmpMy;
-           break;
+           
        end
-    end
-
-    % Sinon 
-    if (j == nbIteration)
-        dx=bordX-mx;
-        dy=bordY-my;
-        r(1,i)=sqrt(dx^2+dy^2);
-        poly(i,1)=bordX;
-        poly(i,2)=bordY;
+       
+       floatX = tmpMx+i*cos(t(1,i));
+       floatY = tmpMy+i*sin(t(1,i));
+       tmpMx=round(floatX);
+       tmpMy=round(floatY);
     end
 
 end
